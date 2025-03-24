@@ -1,3 +1,7 @@
+<img width="449" alt="" src="https://github.com/user-attachments/assets/e2f1a6fe-c8d1-4140-b38f-372a196dafa1" />
+<img width="478" alt="" src="https://github.com/user-attachments/assets/cb2529af-e17c-4f49-96fd-f57da4091b28" />
+
+
 # O'ASIS Game
 
 A modern, stylish take on the classic grid-based strategy game. Experience the O'ASIS - where strategy meets fun!
