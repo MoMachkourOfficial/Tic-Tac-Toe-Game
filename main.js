@@ -1,6 +1,6 @@
 import confetti from 'canvas-confetti';
 
-class TicTacToe {
+class OasisGame {
   constructor() {
     this.currentPlayer = 'X';
     this.board = ['', '', '', '', '', '', '', '', ''];
@@ -10,71 +10,114 @@ class TicTacToe {
     this.statusDisplay = document.getElementById('status');
     this.resetButton = document.getElementById('reset-btn');
     
+    // Initialize Web Audio Context
+    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    
+    // Call the method to initialize event listeners
     this.initializeEventListeners();
   }
   
+  // Add the missing initializeEventListeners method
   initializeEventListeners() {
-    this.cellElements.forEach((cell, index) => {
-      cell.addEventListener('click', () => this.cellClicked(cell, index));
+    // Add click event listeners to each cell
+    this.cellElements.forEach((cell) => {
+      cell.addEventListener('click', (event) => this.handleCellClick(event));
     });
     
+    // Add click event listener to reset button
     this.resetButton.addEventListener('click', () => this.resetGame());
   }
   
-  cellClicked(clickedCell, cellIndex) {
-    if (this.board[cellIndex] !== '' || !this.gameActive) return;
+  // Handle cell click logic
+  handleCellClick(event) {
+    const clickedCell = event.target;
+    const clickedCellIndex = parseInt(clickedCell.getAttribute('data-index'));
     
-    this.board[cellIndex] = this.currentPlayer;
+    // Check if the cell is already played or game is not active
+    if (this.board[clickedCellIndex] !== '' || !this.gameActive) {
+      return;
+    }
+    
+    // Update the cell and board
+    this.board[clickedCellIndex] = this.currentPlayer;
     clickedCell.textContent = this.currentPlayer;
     clickedCell.setAttribute('data-player', this.currentPlayer);
     
+    // Check for win or draw
     if (this.checkWin()) {
-      this.endGame(false);
+      this.statusDisplay.textContent = `Player ${this.currentPlayer} Wins!`;
+      this.gameActive = false;
+      this.celebrateWin();
       return;
     }
     
     if (this.checkDraw()) {
-      this.endGame(true);
+      this.statusDisplay.textContent = "It's a Draw!";
+      this.gameActive = false;
       return;
     }
     
-    this.switchPlayer();
-  }
-  
-  switchPlayer() {
+    // Switch players
     this.currentPlayer = this.currentPlayer === 'X' ? 'O' : 'X';
     this.statusDisplay.textContent = `${this.currentPlayer}'s Turn`;
   }
   
+  // Check for a win condition
   checkWin() {
     const winConditions = [
-      [0, 1, 2], [3, 4, 5], [6, 7, 8],  // Rows
-      [0, 3, 6], [1, 4, 7], [2, 5, 8],  // Columns
-      [0, 4, 8], [2, 4, 6]  // Diagonals
+      [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+      [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+      [0, 4, 8], [2, 4, 6] // Diagonals
     ];
     
     return winConditions.some(condition => {
-      return condition.every(index => {
-        return this.board[index] === this.currentPlayer;
-      });
+      const [a, b, c] = condition;
+      return this.board[a] && 
+             this.board[a] === this.board[b] && 
+             this.board[a] === this.board[c];
     });
   }
   
+  // Check for a draw condition
   checkDraw() {
     return this.board.every(cell => cell !== '');
   }
   
-  endGame(draw) {
-    this.gameActive = false;
-    if (draw) {
-      this.statusDisplay.textContent = 'Draw!';
-    } else {
-      this.statusDisplay.textContent = `Player ${this.currentPlayer} Wins!`;
-      this.celebrateWin();
-    }
+  // Method to generate a celebratory sound
+  playWinSound() {
+    // Create an oscillator (sound generator)
+    const oscillator = this.audioContext.createOscillator();
+    const gainNode = this.audioContext.createGain();
+    
+    // Set up a cheerful, ascending tone
+    oscillator.type = 'triangle';
+    oscillator.frequency.setValueAtTime(440, this.audioContext.currentTime); // Start at A4
+    
+    // Create a quick ascending pitch effect
+    oscillator.frequency.exponentialRampToValueAtTime(
+      880, // Go up an octave
+      this.audioContext.currentTime + 0.5 // Over half a second
+    );
+    
+    // Configure volume
+    gainNode.gain.setValueAtTime(0.5, this.audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(
+      0.001, 
+      this.audioContext.currentTime + 0.5
+    );
+    
+    // Connect and play the sound
+    oscillator.connect(gainNode);
+    gainNode.connect(this.audioContext.destination);
+    
+    oscillator.start();
+    oscillator.stop(this.audioContext.currentTime + 0.5);
   }
   
   celebrateWin() {
+    // Play generated sound
+    this.playWinSound();
+
     const duration = 3 * 1000;
     const animationEnd = Date.now() + duration;
     const defaults = { 
@@ -113,6 +156,7 @@ class TicTacToe {
   }
   
   resetGame() {
+    // Modify reset to handle audio context
     this.currentPlayer = 'X';
     this.board = ['', '', '', '', '', '', '', '', ''];
     this.gameActive = true;
@@ -127,5 +171,5 @@ class TicTacToe {
 
 // Initialize the game when the page loads
 window.addEventListener('DOMContentLoaded', () => {
-  new TicTacToe();
+  new OasisGame();
 });
